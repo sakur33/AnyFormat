@@ -1,0 +1,21 @@
+# Artefactos de compilación (PyInstaller)
+build/
+dist/
+*.manifest
+
+# Entorno virtual
+venv/
+.venv/
+env/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
