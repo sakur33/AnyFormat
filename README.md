@@ -97,7 +97,7 @@ ffmpeg, así que no requiere nada instalado en la máquina destino.
 
 ```bash
 pip install -r requirements.txt
-python app.py
+python app.py 
 ```
 
 ## Notas
@@ -108,4 +108,4 @@ python app.py
 - **SVG en Windows**: `cairosvg` necesita las librerías de Cairo (GTK). El
   empaquetado las incluye, pero si compilas y svg falla, instala
   [GTK3 runtime](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer)
-  antes de ejecutar `build.bat`. El resto de formatos no requieren nada extra.
+  antes de ejecutar `build.bat`. El resto de formatos no requieren nada extra. 
