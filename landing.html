@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AnyFormat — El conversor que no caduca nunca</title>
+<style>
+  /* ----------------------------------------------------------------
+     AnyFormat — homenaje al nagware honesto
+     Dirección visual: caja de diálogo de instalador retro (gris sistema,
+     relieves, bisel) reinterpretada con tipografía y aire modernos.
+     Paleta:
+       --bg      #c3c7cb  gris escritorio clásico
+       --panel   #ece9e0  gris hueso de ventana
+       --ink     #1b1d21  texto
+       --bevel-l #ffffff  luz del bisel
+       --bevel-d #7b7e83  sombra del bisel
+       --accent  #1453b8  azul "OK button" (acción)
+       --gold    #e0a92e  acento de la donación
+     Tipos: Inter (display+body) para limpieza moderna;
+            'DM Mono' para sabor de ventana de sistema/datos.
+  ------------------------------------------------------------------- */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=DM+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg:#c3c7cb; --panel:#ece9e0; --ink:#1b1d21;
+    --bevel-l:#ffffff; --bevel-d:#7b7e83; --bevel-dd:#55585c;
+    --accent:#1453b8; --accent-d:#0d3a86; --gold:#e0a92e; --gold-d:#b9851a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg);
+    background-image:
+      linear-gradient(135deg, rgba(255,255,255,.18) 0 1px, transparent 1px),
+      linear-gradient(45deg, rgba(0,0,0,.04) 0 1px, transparent 1px);
+    background-size:6px 6px;
+    color:var(--ink);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px}
+
+  /* ---- bisel reutilizable, el alma del look retro ---- */
+  .bevel{
+    background:var(--panel);
+    border:2px solid var(--bevel-dd);
+    border-top-color:var(--bevel-l);
+    border-left-color:var(--bevel-l);
+    box-shadow:inset 1px 1px 0 var(--bevel-l), inset -1px -1px 0 var(--bevel-d),
+               3px 3px 0 rgba(0,0,0,.18);
+  }
+  .bevel-in{
+    border:2px solid var(--bevel-l);
+    border-top-color:var(--bevel-d);
+    border-left-color:var(--bevel-d);
+    box-shadow:inset 1px 1px 0 var(--bevel-d);
+  }
+
+  /* ---- titlebar de ventana ---- */
+  .titlebar{
+    display:flex;align-items:center;gap:8px;
+    background:linear-gradient(90deg,var(--accent),#3f74c9);
+    color:#fff;padding:5px 8px;font-family:'DM Mono',monospace;
+    font-size:13px;font-weight:500;letter-spacing:.02em;
+  }
+  .titlebar .dot{width:11px;height:11px;border-radius:2px;background:#fff3;border:1px solid #fff6}
+  .titlebar .sq{margin-left:auto;display:flex;gap:4px}
+  .titlebar .sq span{
+    width:16px;height:14px;display:grid;place-items:center;
+    background:var(--panel);color:var(--ink);font-size:11px;line-height:1;
+    border:1px solid var(--bevel-dd);border-top-color:var(--bevel-l);border-left-color:var(--bevel-l);
+  }
+
+  /* ---- HERO como ventana de aplicación ---- */
+  header{padding:48px 0 36px}
+  .app-window{margin-bottom:14px}
+  .app-body{padding:34px 30px 30px;text-align:center}
+  .logo-mark{
+    font-family:'DM Mono',monospace;font-weight:500;
+    display:inline-flex;align-items:center;gap:9px;
+    font-size:13px;color:var(--bevel-dd);margin-bottom:18px;letter-spacing:.04em;
+  }
+  .logo-mark b{
+    background:var(--ink);color:var(--panel);padding:2px 7px;border-radius:3px;
+    font-weight:600;letter-spacing:.06em;
+  }
+  h1{
+    font-size:clamp(36px,7vw,62px);line-height:1.02;font-weight:800;
+    letter-spacing:-.03em;margin-bottom:8px;
+  }
+  h1 .free{color:var(--accent)}
+  .seria{
+    font-family:'DM Mono',monospace;font-size:clamp(13px,2.4vw,16px);
+    color:var(--bevel-dd);font-weight:500;margin-bottom:26px;
+  }
+  .seria u{text-decoration-color:var(--gold);text-underline-offset:3px}
+
+  .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:15px;
+    padding:13px 26px;cursor:pointer;border:none;
+    background:var(--panel);color:var(--ink);
+    border:2px solid var(--bevel-dd);border-top-color:var(--bevel-l);border-left-color:var(--bevel-l);
+    box-shadow:2px 2px 0 rgba(0,0,0,.2);
+    transition:transform .04s, box-shadow .04s;
+  }
+  .btn:active{transform:translate(2px,2px);box-shadow:0 0 0 rgba(0,0,0,.2)}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent-d);
+    border-top-color:#5d8ad6;border-left-color:#5d8ad6}
+  .btn.gold{background:var(--gold);color:#3a2a04;border-color:var(--gold-d);
+    border-top-color:#f2cd6e;border-left-color:#f2cd6e}
+  .btn small{display:block;font-weight:400;font-size:11px;opacity:.85;font-family:'DM Mono',monospace}
+
+  /* ---- contador estilo "registro" ---- */
+  .meter{
+    margin-top:24px;font-family:'DM Mono',monospace;font-size:12px;
+    color:var(--bevel-dd);display:inline-flex;align-items:center;gap:8px;
+    padding:6px 12px;
+  }
+  .meter b{color:var(--ink)}
+  .blink{width:7px;height:14px;background:var(--accent);animation:bl 1.1s steps(1) infinite}
+  @keyframes bl{50%{opacity:0}}
+
+  /* ---- secciones ---- */
+  section{padding:34px 0}
+  .eyebrow{
+    font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:14px;
+  }
+  h2{font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+  .lead{color:#3c3f44;max-width:60ch;margin-bottom:22px}
+
+  /* ---- comparativa WinRAR ---- */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:600px){.compare{grid-template-columns:1fr}}
+  .card{padding:0;overflow:hidden}
+  .card .titlebar{font-size:12px}
+  .card .titlebar.gray{background:linear-gradient(90deg,#6b6e73,#8a8d92)}
+  .card-body{padding:18px 18px 20px}
+  .card h3{font-size:15px;font-family:'DM Mono',monospace;margin-bottom:12px;font-weight:500}
+  .card ul{list-style:none;font-size:14px}
+  .card li{padding:5px 0 5px 24px;position:relative;color:#2b2e33}
+  .card li::before{position:absolute;left:0;top:5px;font-family:'DM Mono',monospace;font-weight:600}
+  .card.them li::before{content:'×';color:#b23b3b}
+  .card.us li::before{content:'✓';color:#1f8a4c}
+
+  /* ---- formatos grid ---- */
+  .fmt-window .app-body{text-align:left;padding:22px}
+  .fmt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px;margin-top:8px}
+  .chip{
+    font-family:'DM Mono',monospace;font-size:12px;text-align:center;
+    padding:9px 4px;background:#fff;color:var(--ink);
+    border:1px solid var(--bevel-d);border-top-color:var(--bevel-l);border-left-color:var(--bevel-l);
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .fmt-cat{font-family:'DM Mono',monospace;font-size:11px;color:var(--bevel-dd);
+    text-transform:uppercase;letter-spacing:.1em;margin:16px 0 6px}
+
+  /* ---- donación / la "cuenta" ---- */
+  .donate-window .app-body{text-align:center;padding:30px 26px}
+  .donate-window h2{margin-bottom:10px}
+  .iban{
+    font-family:'DM Mono',monospace;font-size:14px;background:#fff;
+    padding:12px 14px;display:inline-block;margin:8px 0 18px;
+    border:1px solid var(--bevel-d);border-top-color:var(--bevel-l);border-left-color:var(--bevel-l);
+    user-select:all;
+  }
+
+  footer{padding:30px 0 50px;text-align:center;font-family:'DM Mono',monospace;
+    font-size:12px;color:var(--bevel-dd)}
+
+  /* =================================================================
+     EL NAG — banner de donación, homenaje al shareware eterno.
+     Aparece tras unos segundos, hace el chiste, NO bloquea nada.
+  ================================================================== */
+  .nag-overlay{
+    position:fixed;inset:0;background:rgba(40,42,46,.35);
+    display:none;align-items:flex-end;justify-content:flex-end;
+    padding:22px;z-index:99;animation:fade .25s ease;
+  }
+  .nag-overlay.show{display:flex}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .nag{max-width:380px;width:100%;animation:pop .28s cubic-bezier(.2,1.3,.5,1)}
+  @keyframes pop{from{transform:translateY(18px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+  .nag .app-body{padding:20px 20px 18px;text-align:left}
+  .nag .ico{font-family:'DM Mono',monospace;font-size:30px;float:left;margin:0 14px 6px 0;
+    background:var(--gold);color:#3a2a04;width:48px;height:48px;display:grid;place-items:center;
+    border:2px solid var(--gold-d);border-top-color:#f2cd6e;border-left-color:#f2cd6e}
+  .nag h4{font-size:16px;margin-bottom:6px;font-weight:700}
+  .nag p{font-size:13px;color:#34373c;margin-bottom:6px}
+  .nag .count{font-family:'DM Mono',monospace;font-size:12px;color:var(--bevel-dd);margin:10px 0 14px;clear:both}
+  .nag .nag-btns{display:flex;gap:8px}
+  .nag .btn{padding:9px 16px;font-size:13px;box-shadow:1px 1px 0 rgba(0,0,0,.2)}
+  .nag-later{background:none;border:none;font-family:'DM Mono',monospace;font-size:12px;
+    color:var(--bevel-dd);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .nag-trigger{margin-top:20px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ===================== HERO ===================== -->
+  <header>
+    <div class="app-window bevel app-window">
+      <div class="titlebar">
+        <span class="dot"></span> anyformat.exe
+        <span class="sq"><span>_</span><span>▢</span><span>×</span></span>
+      </div>
+      <div class="app-body">
+        <div class="logo-mark"><b>ANY</b>FORMAT · v1.0 · sin caducidad</div>
+        <h1>Convierte lo que sea.<br><span class="free">Gratis para siempre.</span></h1>
+        <p class="seria">El conversor de archivos que nunca te pedirá la licencia. <u>(Sí, en serio.)</u></p>
+        <div class="cta-row">
+          <button class="btn primary" onclick="document.getElementById('descargar').scrollIntoView()">
+            Descargar para Windows
+            <small>.exe · 1 archivo · sin instalación</small>
+          </button>
+          <button class="btn gold" onclick="showNag()">
+            Donar un café
+            <small>opcional, de verdad</small>
+          </button>
+        </div>
+        <div class="meter bevel-in">
+          <span class="blink"></span>
+          conversiones realizadas hoy: <b id="ticker">12.847</b>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== EL CHISTE: COMPARATIVA ===================== -->
+  <section>
+    <div class="eyebrow">// el modelo de negocio</div>
+    <h2>Inspirado en el software más honesto del mundo.</h2>
+    <p class="lead">Ya sabes cuál. Ese que llevas usando 15 años con su "prueba de
+      40 días" que nunca caducó. Le debemos todo. Solo cambiamos una cosa: no insistimos.</p>
+    <div class="compare">
+      <div class="card them bevel">
+        <div class="titlebar gray"><span class="dot"></span> el_otro.exe</div>
+        <div class="card-body">
+          <h3>El clásico</h3>
+          <ul>
+            <li>Prueba de 40 días (que nunca termina)</li>
+            <li>Te recuerda comprar en cada apertura</li>
+            <li>Ventana que tarda en dejarte cerrar</li>
+            <li>Nadie ha pagado jamás. Nadie.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card us bevel">
+        <div class="titlebar"><span class="dot"></span> anyformat.exe</div>
+        <div class="card-body">
+          <h3>AnyFormat</h3>
+          <ul>
+            <li>Gratis. Sin prueba, sin reloj, sin truco</li>
+            <li>Te pedimos donar UNA vez. Y se cierra solo</li>
+            <li>Cero registro, cero cuenta, cero correo</li>
+            <li>Si donas, nos harás muy felices</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FORMATOS ===================== -->
+  <section id="descargar">
+    <div class="eyebrow">// qué traga</div>
+    <h2>Imágenes, documentos, audio, vídeo y datos.</h2>
+    <p class="lead">Incluidos los formatos modernos de internet: HEIC de tu iPhone,
+      AVIF, WebP, SVG. Selecciona origen, destino y carpeta. O un solo archivo. Listo.</p>
+    <div class="fmt-window bevel">
+      <div class="titlebar"><span class="dot"></span> formatos_soportados.txt</div>
+      <div class="app-body">
+        <div class="fmt-cat">Imagen</div>
+        <div class="fmt-grid">
+          <div class="chip">PNG</div><div class="chip">JPG</div><div class="chip">HEIC</div>
+          <div class="chip">AVIF</div><div class="chip">WEBP</div><div class="chip">GIF</div>
+          <div class="chip">TIFF</div><div class="chip">BMP</div><div class="chip">ICO</div>
+          <div class="chip">SVG</div>
+        </div>
+        <div class="fmt-cat">Documento</div>
+        <div class="fmt-grid">
+          <div class="chip">PDF</div><div class="chip">DOCX</div><div class="chip">TXT</div>
+          <div class="chip">HTML</div><div class="chip">MD</div>
+        </div>
+        <div class="fmt-cat">Audio</div>
+        <div class="fmt-grid">
+          <div class="chip">MP3</div><div class="chip">WAV</div><div class="chip">OGG</div>
+          <div class="chip">FLAC</div><div class="chip">AAC</div><div class="chip">M4A</div>
+        </div>
+        <div class="fmt-cat">Vídeo</div>
+        <div class="fmt-grid">
+          <div class="chip">MP4</div><div class="chip">AVI</div><div class="chip">MKV</div>
+          <div class="chip">MOV</div><div class="chip">WEBM</div><div class="chip">GIF</div>
+        </div>
+        <div class="fmt-cat">Datos</div>
+        <div class="fmt-grid">
+          <div class="chip">CSV</div><div class="chip">XLSX</div><div class="chip">JSON</div>
+          <div class="chip">TSV</div>
+        </div>
+      </div>
+    </div>
+    <div class="cta-row" style="margin-top:18px">
+      <button class="btn primary" onclick="alert('Aquí enlazarías a dist/Conversor.exe')">
+        Descargar AnyFormat.exe
+        <small>Windows 10/11 · gratis para siempre</small>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===================== LA "CUENTA" (donación) ===================== -->
+  <section>
+    <div class="donate-window bevel">
+      <div class="titlebar"><span class="dot"></span> gracias.exe</div>
+      <div class="app-body">
+        <div class="eyebrow" style="text-align:center">// la única cuenta que pedimos</div>
+        <h2>Es una cuenta bancaria. No la tuya.</h2>
+        <p class="lead" style="margin:0 auto 16px">No hay que registrarse. No hay perfil que crear.
+          La "cuenta" del modelo es esta, por si AnyFormat te ahorró un mal rato y quieres pagar el café:</p>
+        <a class="btn gold" href="https://ko-fi.com/free_software_solutions" target="_blank" rel="noopener">☕ Invitar a un café en Ko-fi</a>
+      </div>
+    </div>
+    <p class="nag-trigger" style="text-align:center">
+      <button class="nag-later" onclick="showNag()">(ver cómo es el recordatorio →)</button>
+    </p>
+  </section>
+
+</div>
+
+<footer>
+  AnyFormat · hecho con cariño y nostalgia del shareware · sin cookies, sin cuentas, sin trucos
+</footer>
+
+<!-- ===================== EL NAG (homenaje funcional) ===================== -->
+<div class="nag-overlay" id="nag">
+  <div class="nag bevel">
+    <div class="titlebar"><span class="dot"></span> recordatorio.exe</div>
+    <div class="app-body">
+      <div class="ico">€</div>
+      <h4>Llevas <span id="nagcount">847</span> conversiones.</h4>
+      <p>El otro conversor te habría recordado comprar la licencia unas 847 veces.</p>
+      <p>Nosotros, una. Esta. Y se cierra sola.</p>
+      <div class="count">// AnyFormat seguirá siendo gratis dones o no</div>
+      <div class="nag-btns">
+        <button class="btn gold" onclick="closeNag()">Vale, invito al café</button>
+        <button class="nag-later" onclick="closeNag()">ahora no, gracias</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Ticker decorativo del hero
+  let t = 12847;
+  setInterval(()=>{ t += Math.floor(Math.random()*4);
+    document.getElementById('ticker').textContent = t.toLocaleString('es-ES'); }, 1400);
+
+  // El nag aparece una vez, solo, tras unos segundos (demo de la landing)
+  function showNag(){
+    document.getElementById('nagcount').textContent =
+      (820 + Math.floor(Math.random()*60));
+    document.getElementById('nag').classList.add('show');
+  }
+  function closeNag(){ document.getElementById('nag').classList.remove('show'); }
+  // Demo automática: aparece a los 6s la primera visita
+  setTimeout(showNag, 6000);
+  // Cerrar tocando fuera (nunca bloquea: ese es el punto)
+  document.getElementById('nag').addEventListener('click', e=>{
+    if(e.target.id==='nag') closeNag();
+  });
+</script>
+</body>
+</html>
