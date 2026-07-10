@@ -1,0 +1,12 @@
+PyQt5
+pillow
+pillow-heif
+cairosvg
+pandas
+openpyxl
+python-docx
+beautifulsoup4
+reportlab
+pymupdf
+imageio-ffmpeg
+pyinstaller
