@@ -86,7 +86,7 @@ Doble clic en `build.bat`, o desde una terminal:
 build.bat
 ```
 
-El resultado queda en `dist\Conversor.exe`. Es autónomo: incluye el binario de
+El resultado queda en `dist\AnyFormat.exe`. Es autónomo: incluye el binario de
 ffmpeg, así que no requiere nada instalado en la máquina destino.
 
 > Al publicar un release en GitHub, el asset debe casar con el `assetPattern`
