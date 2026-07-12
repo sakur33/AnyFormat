@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Instalador MSI de AnyFormat (WiX v4+).
+
+  Empaqueta la carpeta onedir de PyInstaller (dist\AnyFormat) en un MSI que:
+    - instala en "Archivos de programa\AnyFormat" (perMachine),
+    - crea un acceso directo en el menu Inicio,
+    - se desinstala limpiamente desde "Aplicaciones y caracteristicas".
+
+  El elemento <Files> harvestea dist\AnyFormat\** automaticamente, asi que no
+  hay que declarar a mano las 123 DLLs de _internal.
+
+  Construir (desde la raiz del repo, con dist\AnyFormat ya compilado):
+    wix build AnyFormat.wxs -arch x64 -o dist\AnyFormat-1.0.0.msi
+
+  UpgradeCode debe permanecer FIJO en futuras versiones para que el MSI nuevo
+  reemplace al viejo en vez de instalar una copia paralela. Solo se sube Version.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="AnyFormat"
+      Manufacturer="Free Software Solutions"
+      Version="1.0.0.0"
+      UpgradeCode="5B1D87F0-051A-4C2E-BC9B-E6639B9B78AA"
+      Scope="perMachine"
+      Compressed="yes">
+
+    <MajorUpgrade DowngradeErrorMessage="Ya hay instalada una version mas reciente de AnyFormat." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon.ico" SourceFile="assets\AnyFormat.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="AnyFormat" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="AnyFormat" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="AnyFormat" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="AppShortcut" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="dist\AnyFormat\**" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="AppShortcut" Directory="AppMenuFolder" Guid="7A2E4C10-9F3B-4D8A-B15C-2E6F8A0D4B77">
+      <Shortcut Id="AppStartMenuShortcut"
+                Name="AnyFormat"
+                Description="Conversor de archivos"
+                Target="[INSTALLFOLDER]AnyFormat.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="AppIcon.ico" />
+      <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
+      <RegistryValue Root="HKMU" Key="Software\AnyFormat" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>
