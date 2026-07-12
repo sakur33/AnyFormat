@@ -93,6 +93,75 @@ ffmpeg, así que no requiere nada instalado en la máquina destino.
 > declarado en `UsefulApps/src/content/apps/anyformat.md`. Si renombras el `.exe`,
 > el build del sitio falla antes que publicar un botón de descarga muerto.
 
+## Construir el .dmg (en macOS)
+
+La compilación se hace en un Mac; el repo ya trae todo lo necesario. Desde una
+terminal en el Mac:
+
+```bash
+brew install cairo        # cairosvg lo carga en tiempo de ejecución
+./build_mac.sh
+```
+
+El resultado es `dist/AnyFormat.app` y, si firmas, `dist/AnyFormat-<arch>.dmg`
+(con el alias de `/Applications` para instalar arrastrando). El `.app` es
+*onedir*: no se descomprime en cada arranque, a diferencia del `.exe onefile` de
+Windows.
+
+### Arquitecturas (Intel y Apple Silicon)
+
+Por defecto `build_mac.sh` compila para la CPU del Mac que lo ejecuta. La
+variable `TARGET_ARCH` cambia el destino:
+
+```bash
+TARGET_ARCH=arm64  ./build_mac.sh     # Apple Silicon  -> AnyFormat-arm64.dmg
+TARGET_ARCH=x86_64 ./build_mac.sh     # Intel          -> AnyFormat-x86_64.dmg
+```
+
+Para cubrir ambas familias, lo fiable es **un DMG por arquitectura**, cada uno
+compilado en su toolchain (el `x86_64` en un Intel o bajo Rosetta con un Python y
+un Homebrew x86_64). Un build `x86_64` también corre en Apple Silicon vía Rosetta;
+uno `arm64` **no** corre en Intel.
+
+`TARGET_ARCH=universal2` existe, pero un binario *fat* exige que Python **y todas
+las dependencias binarias** traigan ambos slices. El `libcairo` de Homebrew y el
+`ffmpeg` de `imageio-ffmpeg` son *thin*, así que PyInstaller aborta salvo que las
+hagas *universal2* a mano (lipo). Por eso el camino recomendado es el DMG por
+arquitectura, no `universal2`.
+
+Piezas del empaquetado macOS:
+
+- **`AnyFormat-mac.spec`** — spec de PyInstaller. Genera un `.app`, usa el icono
+  `.icns`, desactiva UPX (rompería la firma) y añade `libcairo` a mano.
+- **`make_icns.py`** — genera `assets/AnyFormat.icns` desde `assets/logo.svg`.
+- **`rthook_cairo.py`** — hace que `cairocffi` encuentre el `libcairo` embebido
+  dentro del bundle (lo abre por nombre en tiempo de ejecución).
+- **`entitlements.plist`** — permisos del *hardened runtime*, obligatorios para
+  notarizar una app de PyInstaller.
+
+### Firma y notarización (opcional)
+
+Sin firmar, el `.dmg` funciona en tu Mac pero Gatekeeper lo bloquea en otras.
+Para distribuirlo, define antes de ejecutar `build_mac.sh`:
+
+```bash
+export DEV_ID_APP="Developer ID Application: Tu Nombre (TEAMID)"
+export NOTARY_PROFILE="AnyFormat"
+```
+
+El perfil de notarización se crea **una sola vez** con una *app-specific
+password* de [appleid.apple.com](https://appleid.apple.com) (no tu contraseña de
+Apple ID):
+
+```bash
+xcrun notarytool store-credentials "AnyFormat" \
+  --apple-id "tu@email.com" --team-id "TEAMID" \
+  --password "clave-especifica-de-app"
+```
+
+Ambas variables son opcionales e independientes: sin `DEV_ID_APP` el script salta
+firma y notarización; con firma pero sin `NOTARY_PROFILE`, firma sin notarizar.
+
 ## Ejecutar en desarrollo
 
 ```bash
