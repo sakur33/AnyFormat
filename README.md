@@ -11,8 +11,9 @@
 
 <!-- site:start -->
 
-A Windows desktop app for converting files, one at a time or by the batch. No
-installer, no registration, no account. A single self-contained `.exe`.
+A desktop app for converting files, one at a time or by the batch, on **Windows
+and macOS**. No registration, no account, no licence key. Everything it needs is
+inside the download.
 
 It is a tribute to the most honest software in the world: that converter you have
 been using for fifteen years on a "40-day trial" that never actually expired. We
@@ -54,10 +55,21 @@ Two notes on the modern web formats. **HEIC/HEIF** is what your iPhone shoots, a
 AnyFormat both reads and writes it. **SVG** is source-only: turning a bitmap into a
 vector is not a conversion, so it is not offered as a target.
 
-## Requirements
+## Download
 
-Windows 10 or 11. Nothing else — no runtime to install, no Python on your machine.
-The `.exe` bundles its own ffmpeg.
+**Windows 10 or 11.** Two ways, same app:
+
+- `AnyFormat.exe` — a single portable file. Download it, double-click it, done.
+  Nothing gets installed.
+- `AnyFormat-<version>.msi` — a normal installer, if you would rather have a Start
+  Menu entry and a clean uninstall.
+
+**macOS 11 Big Sur or later.** `AnyFormat-<arch>.dmg`, signed and notarised: open
+it and drag the app into Applications. Take `arm64` for Apple Silicon and `x86_64`
+for Intel Macs.
+
+No runtime to install and no Python on your machine either way — the download
+bundles its own ffmpeg.
 
 <!-- site:end -->
 
@@ -78,7 +90,12 @@ La página de producto vive ahora en [usefulapps.dev](https://usefulapps.dev/app
 que toma su texto del bloque marcado de arriba. `landing.html` se conserva como
 la maqueta original de la que salió la estética del sitio.
 
-## Construir el .exe (en Windows)
+## Construir en Windows
+
+Hay **dos artefactos** y cada uno sale de un empaquetado distinto. Son
+independientes: puedes construir solo uno.
+
+### El `.exe` portable (onefile)
 
 Doble clic en `build.bat`, o desde una terminal:
 
@@ -86,12 +103,34 @@ Doble clic en `build.bat`, o desde una terminal:
 build.bat
 ```
 
-El resultado queda en `dist\AnyFormat.exe`. Es autónomo: incluye el binario de
-ffmpeg, así que no requiere nada instalado en la máquina destino.
+`build.bat` no usa el `.spec`: pasa los flags a PyInstaller a mano, entre ellos
+`--onefile`. El resultado queda en `dist\AnyFormat.exe`, autónomo (incluye ffmpeg)
+y sin nada que instalar en la máquina destino.
 
-> Al publicar un release en GitHub, el asset debe casar con el `assetPattern`
-> declarado en `UsefulApps/src/content/apps/anyformat.md`. Si renombras el `.exe`,
-> el build del sitio falla antes que publicar un botón de descarga muerto.
+### El `.msi` (onedir + WiX)
+
+El MSI necesita una carpeta, no un archivo único, así que aquí **sí** se usa
+`AnyFormat.spec`, que está en modo *onedir* (`EXE` + `COLLECT`). Con
+[WiX v4+](https://wixtoolset.org/) instalado (`dotnet tool install --global wix`):
+
+```bat
+pyinstaller --noconfirm --clean AnyFormat.spec
+wix build AnyFormat.wxs -arch x64 -o dist\AnyFormat-1.0.0.msi
+```
+
+El primer comando deja `dist\AnyFormat\` (exe + `_internal\`); `AnyFormat.wxs`
+harvestea esa carpeta entera con `<Files Include="dist\AnyFormat\**" />`, instala
+en *Archivos de programa* (perMachine), crea acceso directo en el menú Inicio y se
+desinstala limpio.
+
+El `UpgradeCode` del `.wxs` debe permanecer **fijo** entre versiones para que un
+MSI nuevo reemplace al viejo en vez de instalarse en paralelo. Al sacar versión se
+sube solo `Version` (y el nombre del `-o`).
+
+> Al publicar un release en GitHub, el nombre del asset debe casar con el
+> `assetPattern` declarado en `UsefulApps/src/content/apps/anyformat.md`. Si
+> renombras el `.exe` o el `.msi`, el build del sitio falla antes que publicar un
+> botón de descarga muerto.
 
 ## Construir el .dmg (en macOS)
 
@@ -201,17 +240,27 @@ Para salir del paso sin reiniciar, llama al binario por su ruta completa:
 
 ## Ejecutar en desarrollo
 
+Igual en Windows y en macOS:
+
 ```bash
 pip install -r requirements.txt
-python app.py 
+python app.py
 ```
+
+En macOS, además, `brew install cairo` (`cairosvg` lo carga en tiempo de
+ejecución; el bundle lo lleva dentro, pero en desarrollo no).
 
 ## Notas
 
-- Audio y video usan el ffmpeg embebido en `imageio-ffmpeg`.
+- Audio y video usan el ffmpeg embebido en `imageio-ffmpeg`, en las dos
+  plataformas.
 - pdf → imagen y pdf → texto usan PyMuPDF.
-- El primer arranque del `.exe onefile` tarda unos segundos (se descomprime en temp).
+- El `.exe` portable es *onefile*: el primer arranque tarda unos segundos porque se
+  descomprime en temp. El `.app` de macOS y el MSI son *onedir* y no pagan ese
+  peaje.
 - **SVG en Windows**: `cairosvg` necesita las librerías de Cairo (GTK). El
-  empaquetado las incluye, pero si compilas y svg falla, instala
+  empaquetado las incluye, pero si compilas y svg falla, instala el
   [GTK3 runtime](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer)
-  antes de ejecutar `build.bat`. El resto de formatos no requieren nada extra. 
+  antes de construir. El resto de formatos no requieren nada extra.
+- **SVG en macOS**: lo resuelve `rthook_cairo.py`, que apunta a `cairocffi` al
+  `libcairo` embebido en el bundle. El resto de formatos, tampoco requieren nada.
