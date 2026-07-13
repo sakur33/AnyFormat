@@ -109,26 +109,63 @@ if [[ -z "${NOTARY_PROFILE:-}" ]]; then
   exit 0
 fi
 
+# Envia un artefacto a notarizar y espera el veredicto tolerando cortes de red.
+# `notarytool submit --wait` aborta si la conexion se cae a mitad del sondeo
+# (nos paso: NSLocalizedDescription=The Internet connection appears to be
+# offline). En su lugar enviamos con --no-wait y sondeamos con `info`, que
+# reintentamos: un fallo puntual de red no tumba el build.
+notarize_wait() {
+  local artifact="$1" sub status
+  sub="$(xcrun notarytool submit "$artifact" \
+           --keychain-profile "$NOTARY_PROFILE" --no-wait 2>&1 \
+         | awk '$1=="id:"{print $2; exit}')"
+  [[ -n "$sub" ]] || { echo "      No se obtuvo id de envio para $artifact"; return 1; }
+  echo "      Envio $sub ($artifact); esperando veredicto de Apple..."
+  # 120 sondeos * 15 s = 30 min de margen; la cola de Apple suele tardar minutos.
+  for _ in $(seq 1 120); do
+    # 2>/dev/null: un corte de red hace fallar `info`; reintentamos sin abortar.
+    status="$(xcrun notarytool info "$sub" \
+                --keychain-profile "$NOTARY_PROFILE" 2>/dev/null \
+              | awk '/status:/{print $2}')"
+    case "$status" in
+      Accepted) echo "      Notarizacion aceptada."; return 0 ;;
+      Invalid|Rejected)
+        echo "      Notarizacion RECHAZADA. Registro de Apple:"
+        xcrun notarytool log "$sub" --keychain-profile "$NOTARY_PROFILE" 2>&1 | head -60
+        return 1 ;;
+    esac
+    sleep 15
+  done
+  echo "      Tiempo de espera agotado (30 min) para $sub."
+  return 1
+}
+
 echo "[6/6] Notarizando (esto tarda unos minutos)..."
+
+# 1) Notariza y grapa el .app para que valide SIN CONEXION cuando el usuario lo
+#    arrastre fuera del DMG. Grapar el DMG solo no marca el .app extraido.
 ZIP="dist/AnyFormat-notarize.zip"
 # ditto preserva los metadatos de firma; `zip` a secas los destruye.
 ditto -c -k --keepParent "$APP" "$ZIP"
-xcrun notarytool submit "$ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
+notarize_wait "$ZIP"
 rm -f "$ZIP"
-
-# Grapa el ticket al .app para que valide sin conexion.
 xcrun stapler staple "$APP"
 spctl --assess --type exec --verbose=2 "$APP"
 
 echo "      Creando $DMG..."
 rm -f "$DMG"
-# Monta el .app junto a un alias de /Applications para que el usuario instale
-# arrastrando. hdiutil empaqueta la carpeta entera, no solo el .app.
+# Monta el .app (ya grapado) junto a un alias de /Applications para que el
+# usuario instale arrastrando. hdiutil empaqueta la carpeta entera.
 STAGING="$(mktemp -d)"
 cp -R "$APP" "$STAGING/"
 ln -s /Applications "$STAGING/Applications"
 hdiutil create -volname "AnyFormat" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
 rm -rf "$STAGING"
+
+# 2) El propio DMG debe notarizarse para poder graparlo: `stapler` falla con
+#    "Record not found" (Error 65) sobre un DMG que Apple nunca ha visto.
+#    Notarizar el .app por separado NO registra un ticket para el contenedor.
+notarize_wait "$DMG"
 xcrun stapler staple "$DMG"
 
 echo
