@@ -162,6 +162,43 @@ xcrun notarytool store-credentials "AnyFormat" \
 Ambas variables son opcionales e independientes: sin `DEV_ID_APP` el script salta
 firma y notarización; con firma pero sin `NOTARY_PROFILE`, firma sin notarizar.
 
+## Publicar el release
+
+Los binarios se compilan en su propia máquina (el `.exe` y el `.msi` en Windows,
+el `.dmg` en el Mac) y se suben todos al **mismo release**. La versión del release
+es la de la app, no la del sistema operativo: un único `v1.0.0` con los tres
+assets colgando.
+
+Con el [GitHub CLI](https://cli.github.com/):
+
+```bash
+gh release upload v1.0.0 dist/AnyFormat.exe
+gh release upload v1.0.0 dist/AnyFormat-1.0.0.msi
+gh release upload v1.0.0 dist/AnyFormat-arm64.dmg
+```
+
+Añade `--clobber` para reemplazar un asset que ya exista con ese nombre.
+
+> El nombre del asset debe casar con el `assetPattern` de
+> `UsefulApps/src/content/apps/anyformat.md`. Si lo renombras, el build del sitio
+> falla antes que publicar un botón de descarga muerto.
+
+### `gh` no se encuentra en la terminal de VS Code
+
+El instalador de `gh` añade `C:\Program Files\GitHub CLI\` al PATH del sistema,
+pero **un proceso solo lee el PATH al arrancar**. Si VS Code estaba abierto cuando
+instalaste `gh`, su terminal integrada hereda el PATH viejo — sin `gh` — mientras
+que una PowerShell nueva lo encuentra sin problema. No es cosa de la shell: es un
+entorno rancio.
+
+La solución es **reiniciar VS Code** (cerrarlo del todo, no solo la terminal).
+Para salir del paso sin reiniciar, llama al binario por su ruta completa:
+
+```bash
+"/c/Program Files/GitHub CLI/gh.exe" release list     # Git Bash
+& "C:\Program Files\GitHub CLI\gh.exe" release list   # PowerShell
+```
+
 ## Ejecutar en desarrollo
 
 ```bash
