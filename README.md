@@ -11,22 +11,25 @@
 
 <!-- site:start -->
 
-A desktop app for converting files, one at a time or by the batch, on **Windows
-and macOS**. No registration, no account, no licence key. Everything it needs is
-inside the download.
+AnyFormat is a **free, offline file converter for Windows and macOS**. It converts
+images, audio, video, documents and data files right on your own computer — no
+upload, no registration, no account, no licence key. Everything it needs is inside
+the download.
 
-It is a tribute to the most honest software in the world: that converter you have
-been using for fifteen years on a "40-day trial" that never actually expired. We
-owe it everything. We changed exactly one thing — we do not insist.
+## What it does
 
-## The model
+AnyFormat turns one file format into another **without sending anything to the
+cloud**. Convert HEIC to JPG the moment you copy photos off an iPhone, WebM to MP4
+so a clip plays anywhere, PNG to WebP to shrink a page, a folder of TIFFs to PDF,
+or the audio track out of a video into MP3 — all locally, in seconds. Because the
+conversion runs on your machine, your files never leave it: there is nothing to
+upload and nothing waiting on a stranger's server.
 
-- **Free for real.** No trial, no clock, no locked feature.
-- **Nothing to sign up for.** No registration, no profile, no licence key. If the
-  app saved you a bad afternoon, there is a button to buy a coffee. That is the
-  whole business model.
-- **One reminder.** Every 25 conversions a notice appears, makes the joke, and
-  closes itself. It never blocks anything.
+It handles both the everyday formats and the awkward modern ones. **HEIC and HEIF**
+(what your iPhone shoots) are read *and* written, not just imported. It reaches
+across categories too — image or SVG to PDF, PDF to image, a video to a single
+frame or a looping GIF, a video to just its audio. And it works on whole folders,
+so converting three hundred files is the same two clicks as converting one.
 
 ## Modes
 
@@ -35,7 +38,7 @@ output folder. It converts everything of that source format in the folder.
 
 **Single-file mode** — pick one file, a target format, and where to put it.
 
-## Formats
+## Supported formats
 
 | | |
 | --- | --- |
@@ -54,6 +57,39 @@ The app only ever offers you the targets that make sense for the source you pick
 Two notes on the modern web formats. **HEIC/HEIF** is what your iPhone shoots, and
 AnyFormat both reads and writes it. **SVG** is source-only: turning a bitmap into a
 vector is not a conversion, so it is not offered as a target.
+
+## Why not just use an online converter?
+
+Sites like CloudConvert and Zamzar are fine for one quick file. The catch is what
+you give up: you **upload your files to someone else's server**, and the free tier
+runs out fast.
+
+| | AnyFormat | Online converters |
+| --- | --- | --- |
+| Your files | Stay on your PC, never uploaded | Uploaded to their server |
+| Account | None | Often required past a few files |
+| Free tier | Everything, forever | Daily / size caps, then paid |
+| File size limit | None | Common on free plans |
+| Watermark | Never | Sometimes on media |
+| Works offline | Yes | No — needs a connection |
+| Cost | Free | Subscription for regular use |
+
+If the files are private — a scan of your passport, a client's video, family
+photos — "it never leaves my computer" is not a nice-to-have. That is the whole
+reason AnyFormat exists as an app you install rather than a website you visit.
+
+## The model
+
+- **Free for real.** No trial, no clock, no locked feature.
+- **Nothing to sign up for.** No registration, no profile, no licence key. If the
+  app saved you a bad afternoon, there is a button to buy a coffee. That is the
+  whole business model.
+- **One reminder.** Every 25 conversions a notice appears, makes the joke, and
+  closes itself. It never blocks anything.
+
+It is a tribute to the most honest software in the world: that converter you have
+been using for fifteen years on a "40-day trial" that never actually expired. We
+owe it everything. We changed exactly one thing — we do not insist.
 
 ## Download
 
